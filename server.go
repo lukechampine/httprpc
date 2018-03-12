@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/rpc"
-	"net/rpc/jsonrpc"
 )
 
 // NewServerCodecFunc creates a new rpc.ServerCodec.
@@ -29,7 +28,7 @@ func NewServer(srv *rpc.Server, newCodec NewServerCodecFunc) http.Handler {
 		}
 
 		var buf bytes.Buffer
-		srv.ServeCodec(jsonrpc.NewServerCodec(struct {
+		srv.ServeCodec(newCodec(struct {
 			io.ReadCloser
 			io.Writer
 		}{
