@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"mime"
 	"net/http"
 	"net/rpc"
 )
@@ -19,11 +20,10 @@ func NewServer(srv *rpc.Server, newCodec NewServerCodecFunc) http.Handler {
 		if req.Method != http.MethodPost {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
-		} else if req.Header.Get("Content-Type") != "application/json" {
+		}
+		mediaType, _, _ := mime.ParseMediaType(req.Header.Get("Content-Type"))
+		if mediaType != "application/json" || req.Header.Get("Accept") != "application/json" {
 			http.Error(w, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
-			return
-		} else if req.Header.Get("Accept") != "application/json" {
-			http.Error(w, "Accept must be application/json", http.StatusBadRequest)
 			return
 		}
 
