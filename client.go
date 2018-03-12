@@ -14,7 +14,7 @@ import (
 // NewClientCodecFunc creates a new rpc.ClientCodec.
 type NewClientCodecFunc func(io.ReadWriteCloser) rpc.ClientCodec
 
-// A Client can make JSON-RPC requests over HTTP.
+// A Client can make RPC requests over HTTP.
 type Client struct {
 	seq      uint64
 	newCodec NewClientCodecFunc
@@ -45,8 +45,6 @@ func (c *Client) do(call *rpc.Call) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
 	if c.tweak != nil {
 		c.tweak(req)
 	}

@@ -33,7 +33,7 @@ func (t *Arith) Multiply(args *Args, reply *int) error {
 	return nil
 }
 
-func basicAuthHandler(next http.Handler, password string) http.HandlerFunc {
+func jsonBasicAuthHandler(next http.Handler, password string) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		_, pass, ok := req.BasicAuth()
 		if !ok || pass != password {
@@ -41,6 +41,12 @@ func basicAuthHandler(next http.Handler, password string) http.HandlerFunc {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
+		if req.Header.Get("Content-Type") != "application/json" {
+			http.Error(w, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
 		next.ServeHTTP(w, req)
 	}
 }
@@ -49,12 +55,13 @@ func main() {
 	// create JSON-RPC HTTP server, wrapped with Basic Auth middleware
 	rpc.Register(new(Arith))
 	srv := httprpc.NewServer(rpc.DefaultServer, jsonrpc.NewServerCodec)
-	srv = basicAuthHandler(srv, "foo")
+	srv = jsonBasicAuthHandler(srv, "foo")
 	go http.ListenAndServe(":5555", srv)
 
 	// create JSON-RPC HTTP client, wrapped with Basic Auth "tweak"
 	c := httprpc.NewClient("http://127.0.0.1:5555", jsonrpc.NewClientCodec, func(req *http.Request) {
 		req.SetBasicAuth("", "foo")
+		req.Header.Set("Content-Type", "application/json")
 	})
 
 	// invoke RPC
